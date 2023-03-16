@@ -206,6 +206,9 @@
     "node": "14 || 16 || 18 || 19"
   },
   "dependencies": {
+    "@babel/core": "^7.21.3",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-transform-modules-commonjs": "^7.21.2",
     "@cucumber/ci-environment": "9.1.0",
     "@cucumber/cucumber-expressions": "16.1.1",
     "@cucumber/gherkin": "26.0.3",
@@ -252,6 +255,7 @@
     "@microsoft/api-documenter": "7.19.27",
     "@microsoft/api-extractor": "7.33.7",
     "@sinonjs/fake-timers": "10.0.2",
+    "@types/babel__core": "^7.20.0",
     "@types/chai": "4.3.4",
     "@types/chai-xml": "^0.3.2",
     "@types/debug": "4.1.7",
