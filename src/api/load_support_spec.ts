@@ -13,8 +13,8 @@ describe('loadSupport', () => {
   afterEach(async () => teardownEnvironment(environment))
 
   it('should include original paths in the returned support code library', async () => {
-    const { runConfiguration } = await loadConfiguration({}, environment)
-    const support = await loadSupport(runConfiguration, environment)
+    const { runConfiguration, useConfiguration } = await loadConfiguration({}, environment)
+    const support = await loadSupport(runConfiguration, environment, useConfiguration.projectRootPath)
 
     expect(support.originalCoordinates).to.deep.eq({
       requireModules: ['ts-node/register'],

@@ -23,4 +23,5 @@ export interface IConfiguration {
   strict: boolean
   tags: string
   worldParameters: any
+  projectRootPath?: string
 }

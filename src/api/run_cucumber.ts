@@ -24,7 +24,9 @@ import { ILogger } from '../logger'
 export async function runCucumber(
   configuration: IRunOptions,
   environment: IRunEnvironment = {},
-  onMessage?: (message: Envelope) => void
+  onMessage?: (message: Envelope) => void,
+  projectRootPath?: string,
+  customContext?: Record<string, any>
 ): Promise<IRunResult> {
   const { cwd, stdout, stderr, env, debug } = mergeEnvironment(environment)
   const logger: ILogger = new ConsoleLogger(stderr, debug)
@@ -48,6 +50,8 @@ export async function runCucumber(
           requirePaths,
           importPaths,
           requireModules: supportCoordinates.requireModules,
+          projectRootPath: projectRootPath,
+          customContext: customContext
         })
 
   const plugins = await initializePlugins(logger, configuration, environment)

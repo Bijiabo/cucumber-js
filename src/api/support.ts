@@ -6,7 +6,11 @@ import { IdGenerator } from '@cucumber/messages'
 import { ISupportCodeLibrary } from '../support_code_library_builder/types'
 import supportCodeLibraryBuilder from '../support_code_library_builder'
 import { pathToFileURL } from 'url'
-import { replaceRequirePathForSourceCode } from './replaceRequirePath'
+import {
+  replaceRequirePathForSourceCode,
+  replaceRequireStatementForSourceCode,
+} from './replaceRequirePath'
+const vm = require('vm')
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { importer } = require('../importer')
@@ -38,7 +42,7 @@ function isSubdirectory(params: {
  * @returns The absolute path to the nearest node_modules directory or null if not found.
  */
 export function findNearestNodeModules(filePath: string): string | null {
-  let currentDir = path.dirname(path.resolve(filePath))
+  let currentDir = path.dirname(path.resolve(path.join(filePath, '../../..')))
 
   while (true) {
     const nodeModulesPath = path.join(currentDir, 'node_modules')
@@ -63,12 +67,16 @@ export async function getSupportCodeLibrary({
   requireModules,
   requirePaths,
   importPaths,
+  projectRootPath,
+  customContext,
 }: {
   cwd: string
   newId: IdGenerator.NewId
   requireModules: string[]
   requirePaths: string[]
   importPaths: string[]
+  projectRootPath?: string
+  customContext?: Record<string, any>
 }): Promise<ISupportCodeLibrary> {
   supportCodeLibraryBuilder.reset(cwd, newId, {
     requireModules,
@@ -78,8 +86,17 @@ export async function getSupportCodeLibrary({
   requireModules.map((module) => require(module))
 
   // todo: 增加一段英文注释
-  const pathForNodeModulesDir = findNearestNodeModules(__dirname)
-  const pathForProjectRoot = path.join(pathForNodeModulesDir, '..')
+  // prepare path
+  let pathForNodeModulesDir: string
+  let pathForProjectRoot: string
+  if (projectRootPath) {
+    pathForNodeModulesDir = path.join(projectRootPath, 'node_modules')
+    pathForProjectRoot = projectRootPath
+  } else {
+    pathForNodeModulesDir = findNearestNodeModules(__dirname)
+    pathForProjectRoot = path.join(pathForNodeModulesDir, '..')
+  }
+
   for (let requirePath of requirePaths) {
     const isInCurrentProjectDir = isSubdirectory({
       directory: pathForProjectRoot,
@@ -99,38 +116,91 @@ export async function getSupportCodeLibrary({
         fileName = md5.digest('hex')
       }
       // replace require logic
-      sourceCodeString = replaceRequirePathForSourceCode({
-        sourceCodeString,
-        replaceLogic: ({ originalRequirePath }) => {
-          if (isPath(originalRequirePath)) {
-            return {
-              needReplace: false,
-            }
-          } else {
-            const npmPackagePathInCurrentNodeModules = path.join(
-              pathForNodeModulesDir,
-              originalRequirePath
-            )
-            const packageInstalledInCurrentProject = fs.existsSync(
-              npmPackagePathInCurrentNodeModules
-            )
-            if (packageInstalledInCurrentProject) {
-              return {
-                needReplace: true,
-                newRequirePath: npmPackagePathInCurrentNodeModules,
-              }
-            } else {
+      if (customContext) {
+        /**
+         * The context is passed in via the vm module
+         * replace require statement to context variable
+         */
+        sourceCodeString = replaceRequireStatementForSourceCode({
+          sourceCodeString,
+          replaceLogic: ({ originalRequirePath }) => {
+            if (isPath(originalRequirePath)) {
               return {
                 needReplace: false,
               }
+            } else {
+              const npmPackagePathInCurrentNodeModules = path.join(
+                pathForNodeModulesDir,
+                originalRequirePath
+              )
+              /**
+               * target map
+               * original require path -> target statement
+               */
+              const replaceMap: { [key: string]: string } = {
+                '@cucumber/cucumber': 'Cucumber',
+                assert: 'Assert',
+              }
+              if (replaceMap[originalRequirePath]) {
+                return {
+                  needReplace: true,
+                  newContent: replaceMap[originalRequirePath],
+                }
+              } else {
+                return {
+                  needReplace: false,
+                }
+              }
             }
-          }
-        },
-      })
+          },
+        })
+      } else {
+        /**
+         * The context is not passed in via the vm module
+         * replace require path
+         */
+        sourceCodeString = replaceRequirePathForSourceCode({
+          sourceCodeString,
+          replaceLogic: ({ originalRequirePath }) => {
+            if (isPath(originalRequirePath)) {
+              return {
+                needReplace: false,
+              }
+            } else {
+              const npmPackagePathInCurrentNodeModules = path.join(
+                pathForNodeModulesDir,
+                originalRequirePath
+              )
+              const packageInstalledInCurrentProject = fs.existsSync(
+                npmPackagePathInCurrentNodeModules
+              )
+              if (packageInstalledInCurrentProject) {
+                return {
+                  needReplace: true,
+                  newContent: npmPackagePathInCurrentNodeModules,
+                }
+              } else {
+                return {
+                  needReplace: false,
+                }
+              }
+            }
+          },
+        })
+      }
 
+      // not support for electron release Node.js environment
+      /*
       // @ts-ignore
       const mod = new module.constructor()
       mod._compile(sourceCodeString, fileName)
+      //*/
+      const script = new vm.Script(sourceCodeString)
+      console.log('### vm custom context:', customContext)
+      const context = vm.createContext({
+        ...customContext,
+      })
+      script.runInContext(context)
     }
   }
   for (const path of importPaths) {

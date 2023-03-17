@@ -16,7 +16,9 @@ import { ConsoleLogger } from './console_logger'
  */
 export async function loadSupport(
   options: ILoadSupportOptions,
-  environment: IRunEnvironment = {}
+  environment: IRunEnvironment = {},
+  projectRootPath?: string,
+  customContext?: Record<string, any>
 ): Promise<ISupportCodeLibrary> {
   const { cwd, stderr, debug } = mergeEnvironment(environment)
   const logger: ILogger = new ConsoleLogger(stderr, debug)
@@ -33,5 +35,7 @@ export async function loadSupport(
     requireModules: options.support.requireModules,
     requirePaths,
     importPaths,
+    projectRootPath: projectRootPath,
+    customContext: customContext
   })
 }
