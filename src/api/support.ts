@@ -196,7 +196,6 @@ export async function getSupportCodeLibrary({
       mod._compile(sourceCodeString, fileName)
       //*/
       const script = new vm.Script(sourceCodeString)
-      console.log('### vm custom context:', customContext)
       const context = vm.createContext({
         ...customContext,
       })

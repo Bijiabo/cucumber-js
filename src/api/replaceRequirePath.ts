@@ -98,8 +98,7 @@ export function replaceRequireStatementForSourceCode(config: {
                 originalRequirePath: path.node.arguments[0].value,
               })
               if (needReplace && newStatement) {
-                path.node.callee.name = newStatement
-                path.node.arguments[0].value = ""
+                path.replaceWithSourceString(newStatement);
               }
             }
             // remove use strict
