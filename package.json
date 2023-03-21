@@ -1,5 +1,5 @@
 {
-  "name": "cucumber-electron",
+  "name": "@sot.app/cucumber-electron",
   "description": "The Electron implementation of Cucumber.",
   "keywords": [
     "testing",
