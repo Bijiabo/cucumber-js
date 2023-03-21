@@ -1,6 +1,6 @@
 {
-  "name": "@cucumber/cucumber",
-  "description": "The official JavaScript implementation of Cucumber.",
+  "name": "cucumber-electron",
+  "description": "The Electron implementation of Cucumber.",
   "keywords": [
     "testing",
     "bdd",
