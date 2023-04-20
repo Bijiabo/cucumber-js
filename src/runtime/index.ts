@@ -8,6 +8,7 @@ import { retriesForPickle, shouldCauseFailure } from './helpers'
 import { makeRunTestRunHooks, RunsTestRunHooks } from './run_test_run_hooks'
 import { IStopwatch, create } from './stopwatch'
 import TestCaseRunner from './test_case_runner'
+export {messageCenter} from './message'
 
 export interface IRuntime {
   start: () => Promise<boolean>

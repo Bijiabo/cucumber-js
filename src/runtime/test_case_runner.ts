@@ -15,6 +15,7 @@ import { IDefinition } from '../models/definition'
 import { doesHaveValue, doesNotHaveValue } from '../value_checker'
 import { IStopwatch } from './stopwatch'
 import StepDefinition from '../models/step_definition'
+import { sendMessage } from './message'
 
 export interface INewTestCaseRunnerOptions {
   eventBroadcaster: EventEmitter
@@ -225,8 +226,12 @@ export default class TestCaseRunner {
               this.getWorstStepResult().status ===
                 messages.TestStepResultStatus.FAILED && moreAttemptsRemaining
           }
+          const testHookDefinition = findHookDefinition(
+            testStep.hookId,
+            this.supportCodeLibrary
+          )
           return await this.runHook(
-            findHookDefinition(testStep.hookId, this.supportCodeLibrary),
+            testHookDefinition,
             hookParameter,
             !didWeRunStepsYet
           )
@@ -267,7 +272,16 @@ export default class TestCaseRunner {
         duration: messages.TimeConversion.millisecondsToDuration(0),
       }
     }
-    return await this.invokeStep(null, hookDefinition, hookParameter)
+    sendMessage({
+      tag: hookDefinition.name,
+      action: 'beforeRunHook',
+    })
+    const result = await this.invokeStep(null, hookDefinition, hookParameter)
+    sendMessage({
+      tag: hookDefinition.name,
+      action: 'afterRunHook',
+    })
+    return result;
   }
 
   async runStepHooks(
@@ -296,6 +310,11 @@ export default class TestCaseRunner {
     pickleStep: messages.PickleStep,
     testStep: messages.TestStep
   ): Promise<messages.TestStepResult> {
+    sendMessage({
+      tag: pickleStep.text,
+      type: pickleStep.type,
+      action: 'beforeRunStep',
+    })
     const stepDefinitions = testStep.stepDefinitionIds.map(
       (stepDefinitionId) => {
         return findStepDefinition(stepDefinitionId, this.supportCodeLibrary)
@@ -347,6 +366,13 @@ export default class TestCaseRunner {
       )
     }
     finalStepResult.duration = finalDuration
+
+    sendMessage({
+      tag: pickleStep.text,
+      type: pickleStep.type,
+      action: 'afterRunStep',
+    })
+
     return finalStepResult
   }
 }

@@ -88,4 +88,4 @@ export const Runtime = deprecate(
   _Runtime,
   '`Runtime` is deprecated, use `runCucumber` instead; see https://github.com/cucumber/cucumber-js/blob/main/docs/deprecations.md'
 )
-export { INewRuntimeOptions, IRuntimeOptions } from './runtime'
+export { INewRuntimeOptions, IRuntimeOptions, messageCenter } from './runtime'
