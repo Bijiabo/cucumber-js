@@ -1,5 +1,5 @@
 {
-  "name": "@sot.app/cucumber-electron",
+  "name": "@acflow/cucumber-electron",
   "description": "The Electron implementation of Cucumber.",
   "keywords": [
     "testing",
@@ -346,5 +346,8 @@
     "api/",
     "bin/",
     "lib/"
-  ]
+  ],
+  "publishConfig": {
+    "registry": "https://npm.corp.acflow.com/"
+  }
 }
